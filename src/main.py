@@ -10,8 +10,8 @@ import utils
 PROG_VERSION = "1.0"
 PROG_SRC_DIR = os.path.dirname(os.path.realpath(__file__))
 PROG_DIR = PROG_SRC_DIR[0:PROG_SRC_DIR.rfind('/')]
-PROG_DB_DIR = PROG_DIR + "/db"
-PROG_MAP_TEMPLATE = PROG_DB_DIR + "/mapTemplate.tsv"
+PROG_SHARE_DIR = PROG_DIR + "/share"
+PROG_MAP_TEMPLATE = PROG_SHARE_DIR + "/mapTemplate.tsv"
 DEFAULT_OFNAME = "namedValues.tsv"
 WIDE_OFNAME = "wide.tsv"
 
