@@ -1,5 +1,5 @@
 
-import re
+import os
 
 UTF8_STR = 'utf-8'
 ISO8859_STR = 'ISO-8859-1'
@@ -37,3 +37,12 @@ def bytesToLines(bytes):
     s = bytesToStr(bytes)
     lines = s.rsplit('\r\n')
     return lines
+
+def getDuplicateOfname(ofname, append):
+    ofdir = os.path.dirname(ofname)
+    base = os.path.basename(ofname)
+    split = os.path.splitext(base)
+    assert (len(split) == 2)
+    ofname = ofdir + '/' + split[0] + "_" + append + split[1]
+
+    return ofname

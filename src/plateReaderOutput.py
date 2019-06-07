@@ -8,7 +8,7 @@ import math
 
 LONG_COLUMN_LIST = ['row', 'column', 'sample']
 
-def toDfValue(val):
+def _toDfValue(val):
     if val == "":
         return None
     if val == "#Sat":
@@ -16,6 +16,17 @@ def toDfValue(val):
     else:
         return float(val)
 
+
+def _parseTime(val):
+    s = val.split(':')
+    ret = 0
+    for i in range(3):
+        try:
+            ret += (int(s[-(i+1)]) * pow(60, i))
+        except IndexError:
+            break
+
+    return ret
 
 def readMapTemplate(fname, format):
 
@@ -56,23 +67,85 @@ def getRawInput(fname):
     if nBlocks != 1:
         raise NotImplementedError("More than 1 block detected")
 
-    headers = lines[2].split('\t')
-    values = lines[3].split('\t')
-    assert(len(headers) == len(values))
+    #get time format
+    metadata = lines[1].split('\t')
+    try:
+        timeFormat = metadata[metadata.index('TimeFormat') + 1]
+    except ValueError:
+        raise ValueError('Failed to find TimeFormat!')
+    sys.stdout.write("Found '{}' time format".format(timeFormat))
 
-    df = pd.DataFrame(columns = ['block', 'cell', 'value'])
+    columns = lines[2].split('\t')
 
-    #itterate through headers and values elements
-    for i in range(0, len(headers)):
+    #itterate through headers get indecies of values
+    colDict = dict()
+    for i in range(0, len(columns)):
         #check if current index is cell header
-        if re.match('^[A-H][0-9]+$', headers[i]):
-            df.loc[i] = [1, headers[i], toDfValue(values[i])]
+        match = re.search('^([A-H][1-9]{1,2})$', columns[i])
+        if match:
+            colDict[match.group(1)] = i
 
-    #df = df.melt(id_vars = row)
+    colnames = ['block', 'cell', 'value']
+    _index = 0
+    if timeFormat == 'Endpoint':
+        df = pd.DataFrame(columns=colnames)
+
+        values = lines[3].split('\t')
+        if len(columns) != len(values):
+            raise RuntimeError('Invalid row length!')
+        for k, v in colDict.items():
+            df.loc[_index] = [1, k, _toDfValue(values[v])]
+            _index += 1
+
+    elif timeFormat == 'Kinetic':
+        colnames.append('time')
+        _dat_temp = {k:list() for k in colnames}
+
+        #get time col index
+        timeIndex = columns.index('Time(hh:mm:ss)')
+
+        for i in range(3, len(lines) - 1):
+            #split row by \t
+            values = lines[i].split('\t')
+
+            #check that row contains data
+            if len(values) == 1 and values[0] == '':
+                continue
+            if values[0] == '~End':
+                break
+            if len(columns) != len(values):
+                raise RuntimeError('Invalid row length!')
+
+            #itterate through columns
+            timeTemp = _parseTime(values[timeIndex])
+            for k, v in colDict.items():
+                _dat_temp['block'].append(1)
+                _dat_temp['cell'].append(k)
+                _dat_temp['value'].append(_toDfValue(values[v]))
+                _dat_temp['time'].append(timeTemp)
+
+        df = pd.DataFrame(_dat_temp)
+
+    else: raise RuntimeError('Unknown TimeFormat: '.format(timeFormat))
+
     df = df.reset_index(drop = True)
 
     return df
 
+def getWide(df):
+    #check that colnames are correct
+    assert(df.columns.tolist() == ['block', 'cell', 'value'])
 
+    #split cell col
+    df['row'] = df['cell'].str[0:1]
+    df['col'] = df['cell'].str[1:]
+    df = df[['row', 'col', 'value']]
 
+    #convert from long to wide
+    df = df.pivot(index='row', columns='col', values='value')
+
+    #reorder columns
+    df = df[[str(x) for x in list(range(1,13))]]
+
+    return df
 

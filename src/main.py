@@ -5,6 +5,7 @@ import os
 import plateReaderOutput
 import pandas as pd
 import csv
+import utils
 
 PROG_VERSION = "1.0"
 PROG_SRC_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -12,6 +13,7 @@ PROG_DIR = PROG_SRC_DIR[0:PROG_SRC_DIR.rfind('/')]
 PROG_DB_DIR = PROG_DIR + "/db"
 PROG_MAP_TEMPLATE = PROG_DB_DIR + "/mapTemplate.tsv"
 DEFAULT_OFNAME = "namedValues.tsv"
+WIDE_OFNAME = "wide.tsv"
 
 def main(argv):
 
@@ -25,7 +27,7 @@ def main(argv):
 
     parser.add_argument("data_file", nargs='+', help="data file to read")
 
-    parser.add_argument("-m", "--mapPath", default = PROG_MAP_TEMPLATE, nargs = 1,
+    parser.add_argument("-m", "--mapPath", default = PROG_MAP_TEMPLATE, type = str,
                         help = "Path to map file for sample names. Use --blankMap to print blank map. "
                                "Otherwise cell names will be used.")
 
@@ -33,11 +35,14 @@ def main(argv):
                         help="Print map file template and exit.")
 
     parser.add_argument('-f', '--mapFormat', choices = ['wide', 'long'], default = 'wide',
-                        help = "Specify how map is formated.")
+                       help = "Specify how map is formated.")
+
+    parser.add_argument("-w", "--wideOutput", action = 'store_const', default = False, const = True,
+                        help = "Also output wide formated file without sample names.")
 
     parser.add_argument("-o", "--ofname", default = DEFAULT_OFNAME, help = "Specify output file name.")
 
-    parser.add_argument('-n', '--na', action = 'store_const', default = True, const = False,
+    parser.add_argument('-n', '--na', action = 'store_const', default = False, const = True,
                         help = "Specify whether to include rows where the value col is NA in output file. "
                                "By default NAs are not included.")
 
@@ -66,11 +71,18 @@ def main(argv):
         if df is None:
             exit()
 
+        if args.wideOutput:
+            wideOutput = plateReaderOutput.getWide(df)
+            wideOfname = utils.getDuplicateOfname(os.path.abspath(WIDE_OFNAME),
+                                                  os.path.splitext(os.path.basename(_file))[0])
+            wideOutput.to_csv(path_or_buf = wideOfname, sep = '\t',
+                              na_rep = "NA", quoting = csv.QUOTE_NONE, index = True)
+
         #join two data frames by cell and write out
         df_merged = df.merge(template, how = 'left', on = 'cell')
 
         #remove rows with na val col if specified
-        if args.na:
+        if not args.na:
             navals = ~ df_merged['value'].isna()
             df_merged = df_merged[navals]
 
@@ -80,11 +92,7 @@ def main(argv):
         else :
             ofname = os.path.abspath(args.ofname)
             if len(args.data_file) > 1:
-                ofdir = os.path.dirname(ofname)
-                base = os.path.basename(ofname)
-                split = os.path.splitext(base)
-                assert(len(split) == 2)
-                ofname = ofdir + '/' + split[0] + "_" + os.path.splitext(os.path.basename(_file))[0] + split[1]
+                ofname = utils.getDuplicateOfname(ofname, os.path.splitext(os.path.basename(_file))[0])
 
             df_merged.to_csv(path_or_buf = ofname, sep = '\t',
                              na_rep = "NA", quoting = csv.QUOTE_NONE, index = False)
