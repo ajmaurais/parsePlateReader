@@ -72,8 +72,9 @@ def getRawInput(fname):
     try:
         timeFormat = metadata[metadata.index('TimeFormat') + 1]
     except ValueError:
-        raise ValueError('Failed to find TimeFormat!')
-    sys.stdout.write("Found '{}' time format".format(timeFormat))
+        sys.stderr.write('Failed to find TimeFormat!')
+        return None
+    sys.stdout.write("found '{}' time format.\n".format(timeFormat))
 
     columns = lines[2].split('\t')
 
@@ -114,7 +115,8 @@ def getRawInput(fname):
             if values[0] == '~End':
                 break
             if len(columns) != len(values):
-                raise RuntimeError('Invalid row length!')
+                sys.stdout.write('\nInvalid row length!')
+                return None
 
             #itterate through columns
             timeTemp = _parseTime(values[timeIndex])
@@ -126,7 +128,9 @@ def getRawInput(fname):
 
         df = pd.DataFrame(_dat_temp)
 
-    else: raise RuntimeError('Unknown TimeFormat: '.format(timeFormat))
+    else:
+        sys.stderr.write('\nUnknown TimeFormat: '.format(timeFormat))
+        return None
 
     df = df.reset_index(drop = True)
 

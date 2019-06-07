@@ -27,9 +27,8 @@ def main(argv):
 
     parser.add_argument("data_file", nargs='+', help="data file to read")
 
-    parser.add_argument("-m", "--mapPath", default = PROG_MAP_TEMPLATE, type = str,
-                        help = "Path to map file for sample names. Use --blankMap to print blank map. "
-                               "Otherwise cell names will be used.")
+    parser.add_argument("-m", "--mapPath", default = None, type = str,
+                        help = "Path to map file for sample names. Use --blankMap to print blank map.")
 
     parser.add_argument('--blankMap', action='store_const', const=True, default=False,
                         help="Print map file template and exit.")
@@ -60,12 +59,18 @@ def main(argv):
 
     args = parser.parse_args()
 
-    template = plateReaderOutput.readMapTemplate(os.path.abspath(args.mapPath), args.mapFormat)
-    if template is None:
-        exit()
+    if not args.mapPath is None:
+        sys.stdout.write('Reading mapTemplate...')
+        template = plateReaderOutput.readMapTemplate(os.path.abspath(args.mapPath), args.mapFormat)
+        if template is None:
+            exit()
+        sys.stdout.write(' Done!\n')
 
+    sys.stdout.write('Parsing data files...\n')
     all_data = pd.DataFrame(columns = ['file', 'block', 'cell', 'sample', 'value'])
     for file in args.data_file:
+        sys.stdout.write('\tworking on {}... '.format(file))
+
         _file = os.path.abspath(file)
         df = plateReaderOutput.getRawInput(_file)
         if df is None:
@@ -78,8 +83,11 @@ def main(argv):
             wideOutput.to_csv(path_or_buf = wideOfname, sep = '\t',
                               na_rep = "NA", quoting = csv.QUOTE_NONE, index = True)
 
-        #join two data frames by cell and write out
-        df_merged = df.merge(template, how = 'left', on = 'cell')
+        if args.mapPath is None:
+            df_merged = df
+        else:
+            #join two data frames by cell and write out
+            df_merged = df.merge(template, how = 'left', on = 'cell')
 
         #remove rows with na val col if specified
         if not args.na:
@@ -101,6 +109,7 @@ def main(argv):
         all_data.to_csv(path_or_buf = os.path.abspath(args.ofname), sep='\t',
                          na_rep="NA", quoting=csv.QUOTE_NONE, index = False)
 
+    sys.stdout.write('Done!\n')
 
 if __name__ == "__main__":
     main(sys.argv)
