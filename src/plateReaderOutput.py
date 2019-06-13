@@ -82,7 +82,7 @@ def getRawInput(fname):
     colDict = dict()
     for i in range(0, len(columns)):
         #check if current index is cell header
-        match = re.search('^([A-H][1-9]{1,2})$', columns[i])
+        match = re.search('^([A-H][1-9][0-2]?)$', columns[i])
         if match:
             colDict[match.group(1)] = i
 
