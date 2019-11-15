@@ -2,11 +2,11 @@
 import argparse
 import sys
 import os
-import plateReaderOutput
 import pandas as pd
 import csv
-import utils
 
+import modules
+ 
 PROG_VERSION = "1.0"
 PROG_SRC_DIR = os.path.dirname(os.path.realpath(__file__))
 PROG_DIR = PROG_SRC_DIR[0:PROG_SRC_DIR.rfind('/')]
@@ -61,7 +61,7 @@ def main(argv):
 
     if not args.mapPath is None:
         sys.stdout.write('Reading mapTemplate...')
-        template = plateReaderOutput.readMapTemplate(os.path.abspath(args.mapPath), args.mapFormat)
+        template = readMapTemplate(os.path.abspath(args.mapPath), args.mapFormat)
         if template is None:
             exit()
         sys.stdout.write(' Done!\n')
@@ -72,13 +72,13 @@ def main(argv):
         sys.stdout.write('\tworking on {}... '.format(file))
 
         _file = os.path.abspath(file)
-        df = plateReaderOutput.getRawInput(_file)
+        df = getRawInput(_file)
         if df is None:
             exit()
 
         if args.wideOutput:
-            wideOutput = plateReaderOutput.getWide(df)
-            wideOfname = utils.getDuplicateOfname(os.path.abspath(WIDE_OFNAME),
+            wideOutput = getWide(df)
+            wideOfname = getDuplicateOfname(os.path.abspath(WIDE_OFNAME),
                                                   os.path.splitext(os.path.basename(_file))[0])
             wideOutput.to_csv(path_or_buf = wideOfname, sep = '\t',
                               na_rep = "NA", quoting = csv.QUOTE_NONE, index = True)
@@ -100,7 +100,7 @@ def main(argv):
         else :
             ofname = os.path.abspath(args.ofname)
             if len(args.data_file) > 1:
-                ofname = utils.getDuplicateOfname(ofname, os.path.splitext(os.path.basename(_file))[0])
+                ofname = getDuplicateOfname(ofname, os.path.splitext(os.path.basename(_file))[0])
 
             df_merged.to_csv(path_or_buf = ofname, sep = '\t',
                              na_rep = "NA", quoting = csv.QUOTE_NONE, index = False)

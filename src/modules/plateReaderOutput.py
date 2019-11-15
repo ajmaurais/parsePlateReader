@@ -1,11 +1,12 @@
 
 import pandas as pd
-import utils
 import sys
 import os
 import re
 import math
 
+from .utils import bytesToLines
+# 
 LONG_COLUMN_LIST = ['row', 'column', 'sample']
 
 def _toDfValue(val):
@@ -58,7 +59,7 @@ def getRawInput(fname):
 
     #use manual fxns to decode ISO-8859 or utf-8 encoding
     try:
-        lines = utils.bytesToLines(dat)
+        lines = bytesToLines(dat)
     except UnicodeDecodeError:
         sys.stderr.write("Unknown character encoding detected!\n")
         return None
