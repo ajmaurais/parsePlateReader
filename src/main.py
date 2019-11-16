@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import csv
 
-import modules
+import modules as src
  
 PROG_VERSION = "1.0"
 PROG_SRC_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -61,7 +61,7 @@ def main(argv):
 
     if not args.mapPath is None:
         sys.stdout.write('Reading mapTemplate...')
-        template = readMapTemplate(os.path.abspath(args.mapPath), args.mapFormat)
+        template = src.readMapTemplate(os.path.abspath(args.mapPath), args.mapFormat)
         if template is None:
             exit()
         sys.stdout.write(' Done!\n')
@@ -72,13 +72,13 @@ def main(argv):
         sys.stdout.write('\tworking on {}... '.format(file))
 
         _file = os.path.abspath(file)
-        df = getRawInput(_file)
+        df = src.getRawInput(_file)
         if df is None:
             exit()
 
         if args.wideOutput:
-            wideOutput = getWide(df)
-            wideOfname = getDuplicateOfname(os.path.abspath(WIDE_OFNAME),
+            wideOutput = src.getWide(df)
+            wideOfname = src.getDuplicateOfname(os.path.abspath(WIDE_OFNAME),
                                                   os.path.splitext(os.path.basename(_file))[0])
             wideOutput.to_csv(path_or_buf = wideOfname, sep = '\t',
                               na_rep = "NA", quoting = csv.QUOTE_NONE, index = True)

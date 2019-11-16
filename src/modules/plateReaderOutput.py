@@ -31,7 +31,7 @@ def _parseTime(val):
 
 def readMapTemplate(fname, format):
 
-    #read template and convert to long format if necissary
+    #read template and convert to long format if necessary
     template = pd.read_csv(fname, sep = '\t')
     if format == "wide":
         template = template.melt(id_vars = ['row'], value_vars = [str(x) for x in list(range(1, 13))],
@@ -72,6 +72,7 @@ def getRawInput(fname):
     metadata = lines[1].split('\t')
     try:
         timeFormat = metadata[metadata.index('TimeFormat') + 1]
+
     except ValueError:
         sys.stderr.write('Failed to find TimeFormat!')
         return None
